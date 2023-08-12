@@ -46,7 +46,6 @@ class MainWindow(QWidget):
         self.timer.start(60000)
 
     def update(self):
-        print('update')
         self.duration -= 1
         self.choice.setCurrentText(str(self.duration))
         if self.duration < 1:
