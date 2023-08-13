@@ -8,9 +8,6 @@ class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.duration = 1000
-        self.create_ui()
-
-    def create_ui(self):
         self.create_window()
         self.create_tray()
 
