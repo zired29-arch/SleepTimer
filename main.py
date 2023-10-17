@@ -1,20 +1,22 @@
 import os
+import sys
+from PyQt6.QtCore import QTimer, Qt, QLockFile
 from PyQt6.QtGui import QIcon, QAction, QGuiApplication
-from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QSystemTrayIcon, QMenu, QSlider, QLineEdit, QPushButton
-from PyQt6.QtCore import QTimer, Qt
+from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QSystemTrayIcon, QMenu, QSlider, QLineEdit,\
+    QPushButton, QMessageBox
+import ctypes
 
 
 class MainWindow(QWidget):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
-        self.duration = 1000
+        self.duration = 0
         self.create_window()
         self.create_tray()
 
-    def create_window(self):
+    def create_window(self) -> None:
         self.setWindowTitle('Спокойной ночи')
-        self.icon = QIcon('icon.png')
-        self.setWindowIcon(self.icon)
+        self.setWindowIcon(ICON)
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.update)
@@ -22,7 +24,7 @@ class MainWindow(QWidget):
         self.line = QLineEdit('Время в минутах')
         self.line.textChanged.connect(self.line_change)
         self.slider = QSlider(Qt.Orientation.Horizontal, self)
-        self.slider.setGeometry(50,50, 200, 50)
+        self.slider.setGeometry(50, 50, 200, 50)
         self.slider.setMinimum(1)
         self.slider.setMaximum(180)
         self.slider.setTickPosition(QSlider.TickPosition.TicksBelow)
@@ -31,10 +33,10 @@ class MainWindow(QWidget):
         self.button = QPushButton('Запустить')
         self.button.pressed.connect(self.set_timer)
 
-        self.layout = QVBoxLayout(self)
-        self.layout.addWidget(self.line)
-        self.layout.addWidget(self.slider)
-        self.layout.addWidget(self.button)
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.line)
+        layout.addWidget(self.slider)
+        layout.addWidget(self.button)
 
         x = QGuiApplication.primaryScreen().availableGeometry().right()
         y = QGuiApplication.primaryScreen().availableGeometry().bottom()
@@ -42,9 +44,9 @@ class MainWindow(QWidget):
         self.resize(200, 100)
         self.show()
 
-    def create_tray(self):
+    def create_tray(self) -> None:
         self.tray = QSystemTrayIcon()
-        self.tray.setIcon(self.icon)
+        self.tray.setIcon(ICON)
         self.tray.setVisible(True)
         self.tray.activated.connect(self.show_window)
         self.menu = QMenu()
@@ -60,52 +62,77 @@ class MainWindow(QWidget):
         self.menu.addAction(self.quit)
         self.tray.setContextMenu(self.menu)
 
-    def show_window(self, reason):
+    def show_window(self, reason: QSystemTrayIcon.ActivationReason) -> None:
         if reason == QSystemTrayIcon.ActivationReason.DoubleClick:
             self.show()
 
-    def slider_change(self):
+    def slider_change(self) -> None:
         self.line.setText(str(self.slider.value()))
         self.slider.setTickInterval(15)
 
-    def line_change(self):
+    def line_change(self) -> None:
         try:
             self.slider.setValue(int(self.line.text()))
         except ValueError:
             self.line.setText('0')
 
-    def set_timer(self):
+    def set_timer(self) -> None:
         try:
             self.duration = int(self.line.text())
             self.info.setText(f'Минут до отключения: {self.duration}')
             self.stop.setDisabled(False)
             self.hide()
-            self.timer.start(60000)
+            self.timer.start(60000)  # 1 минута в милисекундах
         except ValueError:
             pass
 
-    def stop_timer(self):
+    def stop_timer(self) -> None:
         self.timer.stop()
         self.info.setText('Таймер не запущен')
         self.stop.setDisabled(True)
 
-    def update(self):
+    def update(self) -> None:
         self.duration -= 1
         self.info.setText(f'Минут до отключения: {self.duration}')
         self.slider.setValue(self.duration)
         if self.duration < 1:
-            self.shutdown()
+            shutdown()
 
+    # На кнопку закрытия приложение не должно выключаться, а только сворачиваться
     def closeEvent(self, event) -> None:
         event.ignore()
         self.hide()
 
-    @staticmethod
-    def shutdown():
-        os.system('shutdown /s /t 0')
+
+def shutdown():
+    os.system('shutdown /s /t 0')
+
+
+# Получаем файлы необходимые для запуска
+def resource_path(relative_path: str) -> str:
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
+
+FILE_ATTRIBUTE_HIDDEN = 0x02
 
 
 if __name__ == '__main__':
     app = QApplication([])
-    window = MainWindow()
-    app.exec()
+    ICON = QIcon(resource_path('icon.png'))
+
+    # Проверяем, чтобы это приложение не было запущено 2 раза
+    lock = QLockFile('lock')
+    if lock.tryLock(timeout=0):
+        ctypes.windll.kernel32.SetFileAttributesW('lock', FILE_ATTRIBUTE_HIDDEN)  # Скрываем lock файл от пользователя
+        window = MainWindow()
+        app.exec()
+
+    else:
+        lock_error = QMessageBox(text='Приложение уже запущено')
+        lock_error.setIcon(ICON)
+        lock_error.setWindowTitle('Ошибка')
+        lock_error.exec()
