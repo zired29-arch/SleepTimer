@@ -91,10 +91,28 @@ class MainWindow(QWidget):
         self.info.setText('Таймер не запущен')
         self.stop.setDisabled(True)
 
+    def last_warning(self) -> None:
+        dlg = QMessageBox(self)
+        dlg.setWindowTitle("Предупреждение")
+        dlg.setText(f"Компьютер выключится через {self.duration} минут")
+        dlg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        buttonY = dlg.button(QMessageBox.StandardButton.Yes)
+        buttonY.setText('Ладно')
+        buttonN = dlg.button(QMessageBox.StandardButton.No)
+        buttonN.setText('Сбросить таймер')
+        buttonN.clicked.connect(self.stop_timer)
+        dlg.setIcon(ICON)
+        dlg.open()
+
+
     def update(self) -> None:
         self.duration -= 1
         self.info.setText(f'Минут до отключения: {self.duration}')
         self.slider.setValue(self.duration)
+
+        if self.duration == 5:
+            self.last_warning()
+
         if self.duration < 1:
             shutdown()
 
@@ -136,3 +154,5 @@ if __name__ == '__main__':
         lock_error.setIcon(ICON)
         lock_error.setWindowTitle('Ошибка')
         lock_error.exec()
+
+
