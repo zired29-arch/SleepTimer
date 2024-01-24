@@ -1,7 +1,7 @@
 import os
 import sys
 from PyQt6.QtCore import QTimer, Qt, QLockFile
-from PyQt6.QtGui import QIcon, QAction, QGuiApplication
+from PyQt6.QtGui import QIcon, QAction, QGuiApplication, QPalette, QColor
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QSystemTrayIcon, QMenu, QSlider, QLineEdit,\
     QPushButton, QMessageBox
 import ctypes
@@ -141,6 +141,7 @@ FILE_ATTRIBUTE_HIDDEN = 0x02
 if __name__ == '__main__':
     app = QApplication([])
     ICON = QIcon(resource_path('icon.png'))
+    app.setStyle("Fusion")
 
     # Проверяем, чтобы это приложение не было запущено 2 раза
     lock = QLockFile('lock')
