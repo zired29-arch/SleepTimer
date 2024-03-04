@@ -7,6 +7,8 @@ from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QSystemTrayIcon,
 import ctypes
 
 
+
+
 class MainWindow(QWidget):
     def __init__(self) -> None:
         super().__init__()
@@ -101,7 +103,7 @@ class MainWindow(QWidget):
         buttonN = dlg.button(QMessageBox.StandardButton.No)
         buttonN.setText('Сбросить таймер')
         buttonN.clicked.connect(self.stop_timer)
-        dlg.setIcon(ICON)
+        dlg.setIcon(QMessageBox.Icon.Question)
         dlg.open()
 
 
@@ -139,9 +141,12 @@ FILE_ATTRIBUTE_HIDDEN = 0x02
 
 
 if __name__ == '__main__':
-    app = QApplication([])
+    app = QApplication(sys.argv)
     ICON = QIcon(resource_path('icon.png'))
     app.setStyle("Fusion")
+
+    app.setApplicationName("Sleeper")
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('Sleeper')
 
     # Проверяем, чтобы это приложение не было запущено 2 раза
     lock = QLockFile('lock')
