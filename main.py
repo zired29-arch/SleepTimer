@@ -1,12 +1,10 @@
 import os
 import sys
 from PyQt6.QtCore import QTimer, Qt, QLockFile
-from PyQt6.QtGui import QIcon, QAction, QGuiApplication, QPalette, QColor
+from PyQt6.QtGui import QIcon, QAction, QGuiApplication
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QSystemTrayIcon, QMenu, QSlider, QLineEdit,\
     QPushButton, QMessageBox
 import ctypes
-
-
 
 
 class MainWindow(QWidget):
@@ -98,14 +96,13 @@ class MainWindow(QWidget):
         dlg.setWindowTitle("Предупреждение")
         dlg.setText(f"Компьютер выключится через {self.duration} минут")
         dlg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-        buttonY = dlg.button(QMessageBox.StandardButton.Yes)
-        buttonY.setText('Ладно')
-        buttonN = dlg.button(QMessageBox.StandardButton.No)
-        buttonN.setText('Сбросить таймер')
-        buttonN.clicked.connect(self.stop_timer)
+        button_y = dlg.button(QMessageBox.StandardButton.Yes)
+        button_y.setText('Ладно')
+        button_n = dlg.button(QMessageBox.StandardButton.No)
+        button_n.setText('Сбросить таймер')
+        button_n.clicked.connect(self.stop_timer)
         dlg.setIcon(QMessageBox.Icon.Question)
         dlg.open()
-
 
     def update(self) -> None:
         self.duration -= 1
@@ -125,7 +122,8 @@ class MainWindow(QWidget):
 
 
 def shutdown():
-    os.system('shutdown /s /t 0')
+    app.quit()
+    os.system('shutdown /s /t 10')
 
 
 # Получаем файлы необходимые для запуска
@@ -154,11 +152,12 @@ if __name__ == '__main__':
         ctypes.windll.kernel32.SetFileAttributesW('lock', FILE_ATTRIBUTE_HIDDEN)  # Скрываем lock файл от пользователя
         window = MainWindow()
         app.exec()
+        del lock
 
     else:
-        lock_error = QMessageBox(text='Приложение уже запущено')
-        lock_error.setIcon(ICON)
+        lock_error = QMessageBox()
+        lock_error.setIcon(QMessageBox.Icon.Information)
+        lock_error.setText('Приложение уже запущено')
         lock_error.setWindowTitle('Ошибка')
+        lock_error.setWindowIcon(ICON)  # Установите иконку окна
         lock_error.exec()
-
-
