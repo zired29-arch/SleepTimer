@@ -82,7 +82,7 @@ class MainWindow(QWidget):
             self.info.setText(f'Минут до отключения: {self.duration}')
             self.stop.setDisabled(False)
             self.hide()
-            self.timer.start(60000)  # 1 минута в милисекундах
+            self.timer.start(60001)  # 1 минута в милисекундах
         except ValueError:
             pass
 
